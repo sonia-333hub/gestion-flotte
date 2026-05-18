@@ -2,11 +2,41 @@ FROM php:8.2-fpm
 
 WORKDIR /app
 
-COPY . .
+# Installer dépendances système + outils requis par Composer
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    unzip \
+    zip \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    && docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd
 
+# Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-RUN composer install --no-dev --optimize-autoloader
+# Copier le projet
+COPY . .
+
+# Installer dépendances PHP
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+# Permissions Laravel
+RUN chmod -R 775 storage bootstrap/cache
+
+RUN composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-interaction \
+    --prefer-dist
 
 EXPOSE 8000
 
