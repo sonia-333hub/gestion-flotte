@@ -52,12 +52,21 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 # ======================
 RUN npm install
 RUN npm run build
-
+RUN apt-get update && apt-get install -y libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql
 # ======================
 # PERMISSIONS
 # ======================
+
+
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8000
 
-CMD php artisan serve --host=0.0.0.0 --port=8000
+CMD php artisan config:clear && \
+    php artisan cache:clear && \
+    php artisan route:clear && \
+    php artisan view:clear && \
+    php artisan config:cache && \
+    php artisan migrate --force && \
+    php artisan serve --host=0.0.0.0 --port=8000
