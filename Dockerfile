@@ -1,12 +1,16 @@
-FROM php:8.4.0-cli
+FROM php:8.2-cli
 
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
+    curl \
     libzip-dev \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
     zip
 
-RUN docker-php-ext-install zip
+RUN docker-php-ext-install zip pdo pdo_mysql mbstring xml
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -14,7 +18,9 @@ WORKDIR /app
 
 COPY . .
 
-RUN composer install
+RUN composer install --no-dev --optimize-autoloader
+
+RUN php artisan key:generate
 
 EXPOSE 10000
 
