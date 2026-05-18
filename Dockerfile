@@ -2,7 +2,9 @@ FROM php:8.2-fpm
 
 WORKDIR /app
 
-# Installer dépendances système + outils requis par Composer
+# ======================
+# Dépendances système
+# ======================
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -10,8 +12,12 @@ RUN apt-get update && apt-get install -y \
     zip \
     libpng-dev \
     libonig-dev \
-    libxml2-dev \
-    && docker-php-ext-install \
+    libxml2-dev
+
+# ======================
+# Extensions PHP
+# ======================
+RUN docker-php-ext-install \
     pdo \
     pdo_mysql \
     mbstring \
@@ -20,23 +26,37 @@ RUN apt-get update && apt-get install -y \
     bcmath \
     gd
 
-# Installer Composer
+# ======================
+# NODE JS (OBLIGATOIRE POUR VITE)
+# ======================
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
+
+# ======================
+# COMPOSER
+# ======================
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copier le projet
+# ======================
+# APP COPY
+# ======================
 COPY . .
 
-# Installer dépendances PHP
+# ======================
+# BACKEND INSTALL
+# ======================
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# Permissions Laravel
-RUN chmod -R 775 storage bootstrap/cache
+# ======================
+# FRONTEND BUILD (IMPORTANT)
+# ======================
+RUN npm install
+RUN npm run build
 
-RUN composer install \
-    --no-dev \
-    --optimize-autoloader \
-    --no-interaction \
-    --prefer-dist
+# ======================
+# PERMISSIONS
+# ======================
+RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8000
 
